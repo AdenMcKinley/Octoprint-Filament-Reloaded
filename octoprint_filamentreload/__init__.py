@@ -23,16 +23,25 @@ class FilamentReloadedPlugin(octoprint.plugin.StartupPlugin,
         self.pin = int(self._settings.get(["pin"]))
         self.bounce = int(self._settings.get(["bounce"]))
         self.switch = int(self._settings.get(["switch"]))
+        self.pin2 = int(self._settings.get(["pin2"]))
+        self.bounce2 = int(self._settings.get(["bounce2"]))
+        self.switch2 = int(self._settings.get(["switch2"]))
 
         if self._settings.get(["pin"]) != -1:   # If a pin is defined
-            self._logger.info("Filament Sensor active on GPIO Pin [%s]"%self.pin)
+            self._logger.info("Filament Sensor 1 active on GPIO Pin [%s]"%self.pin)
             GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)    # Initialize GPIO as INPUT
+        if self._settings.get(["pin2"]) != -1:   # If a pin is defined for sensor2
+            self._logger.info("Filament Sensor 2 active on GPIO Pin [%s]"%self.pin2)
+            GPIO.setup(self.pin2, GPIO.IN, pull_up_down=GPIO.PUD_UP)    # Initialize GPIO as INPUT
 
     def get_settings_defaults(self):
         return dict(
             pin     = -1,   # Default is no pin
             bounce  = 250,  # Debounce 250ms
-            switch  = 0    # Normally Open
+            switch  = 0,    # Normally Open
+            pin2     = -1,   # Default is no pin
+            bounce2  = 250,  # Debounce 250ms
+            switch2  = 0    # Normally Open
         )
 
     def get_template_configs(self):
@@ -43,17 +52,26 @@ class FilamentReloadedPlugin(octoprint.plugin.StartupPlugin,
             self._logger.info("Printing started: Filament sensor enabled")
             if self.pin != -1:
                 GPIO.add_event_detect(self.pin, GPIO.BOTH, callback=self.check_gpio, bouncetime=self.bounce)
+            if self.pin2 != -1:
+                GPIO.add_event_detect(self.pin2, GPIO.BOTH, callback=self.check_gpio, bouncetime=self.bounce2)
         elif event in (Events.PRINT_DONE, Events.PRINT_FAILED, Events.PRINT_CANCELLED):
             self._logger.info("Printing stopped: Filament sensor disabled")
             try:
                 GPIO.remove_event_detect(self.pin)
+                GPIO.remove_event_detect(self.pin2)
             except Exception:
                 pass
 
     def check_gpio(self, channel):
         state = GPIO.input(self.pin)
+        state2 = GPIO.input(self.pin2)
         self._logger.debug("Detected sensor [%s] state [%s]"%(channel, state))
+        self._logger.debug("Detected sensor [%s] state [%s]"%(channel, state2))
         if state != self.switch:    # If the sensor is tripped
+            self._logger.debug("Sensor [%s]"%state)
+            if self._printer.is_printing():
+                self._printer.toggle_pause_print()
+        if state2 != self.switch2:    # If the sensor is tripped
             self._logger.debug("Sensor [%s]"%state)
             if self._printer.is_printing():
                 self._printer.toggle_pause_print()
