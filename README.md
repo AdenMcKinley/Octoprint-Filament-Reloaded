@@ -1,3 +1,7 @@
+# This is a modified version of the original "Octoprint-FilamentReloaded" by kontakt
+This version supports 2 sensors with seperate sensor pins.  Both will pause printing.
+Install manually using this URL:
+     https://github.com/AdenMcKinley/Octoprint-Filament-Reloaded/archive/master.zip
 # OctoPrint-FilamentReloaded
 
 Based on the Octoprint-Filament plugin by MoonshineSG (https://github.com/MoonshineSG/Octoprint-Filament), this modification adds the ability to modify your configuration through OctoPrint settings, as well as adding configurations for both NO and NC switches.
